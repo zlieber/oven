@@ -31,7 +31,7 @@ xpreg_med = """
 2 100 4
 """
 
-curves = {
+curves_config = {
     "PTMW post cure slow": ptmw,
     "XPreg cure slow": xpreg_long,
     "XPreg cure fast": xpreg_med
@@ -68,156 +68,145 @@ class Curve:
 
         return x, y
 
-def plotcurve(curve):
-    #curve = Curve("sdf", spec)
-    x, y = curve.getxy()
-    f.clf()
-    a = f.add_subplot(111)
-    a.grid()
-    a.set_xlabel("Time, hrs")
-    a.set_ylabel("Temperature, °C")
-    a.plot(x, y)
-    canvas.draw()
+class MainUI:
+    def __init__(self, curves):
+        self.ts1 = None
+        self.ts2 = None
+        self.armid = 0
 
-def plotrun(curve):
-    x, y = curve.getxy()
-    f_run.clf()
-    a = f_run.add_subplot(111)
-    a.grid()
-    a.set_xlabel("Time, hrs")
-    a.set_ylabel("Temperature, °C")
-    a.set_title(curve.name)
-    a.plot(x, y)
-    canvas_run.draw()
+        self.curves = curves
 
-def showSelected(event):
-    name = lb.get(lb.curselection())
-    plotcurve(Curve(name, curves[name]))
+        self.root = Tk()
+        self.root.attributes('-fullscreen', True)
 
+        self.top_frame = Frame(self.root)
+        self.top_frame.pack(side=TOP, fill=BOTH, expand=True)
 
-ts1 = None
-ts2 = None
+        self.top_frame_run = Frame(self.root)
 
-def labelButtonRelease(event):
-    global ts1, ts2
-    now = datetime.now()
-    if ts1 is not None:
-        delta = now - ts1
-        print(delta)
-        if delta < timedelta(seconds=1):
-            print("Goodbye.")
-            win.destroy()
-    ts1 = ts2
-    ts2 = now
+        self.bottom_frame = Frame(self.root)
+        self.bottom_frame.pack(side=BOTTOM, fill=BOTH, expand=True)
 
-def is_armed():
-    global b
-    return b['bg'] == 'red'
+        self.bottom_right_frame = Frame(self.bottom_frame)
+        self.bottom_right_frame.pack(side=BOTTOM, fill=BOTH)
 
-armid = 0
+        self.launch_button = Button(self.bottom_right_frame,
+                                    text="Start",
+                                    font=('', 60),
+                                    command=self._launch)
 
-def arm():
-    global b, bg, fg, bg, fg, armid
-    bg = (b['bg'])
-    fg = (b['fg'])
-    b['bg'] = 'red'
-    b['fg'] = 'white'
-    loc_armid = randint(1, 65536)
-    armid = loc_armid
-    b.config(activebackground='red')
-    b.config(activeforeground='white')
-    win.after(5000, lambda: disarm(loc_armid))
+        # We don't have a mouse, so make active / passive colours the same
+        self.launch_button.config(activebackground=self.launch_button['bg'])
+        self.launch_button.config(activeforeground=self.launch_button['fg'])
+        self.launch_button.pack(padx=10, pady=10, side=LEFT)
 
-def disarm(eid):
-    global b, bg, fg, armid
-    if eid != 0 and armid != eid:
-        return
-    print("> disarm")
-    b.config(bg=bg)
-    b.config(fg=fg)
-    b.config(activebackground=bg)
-    b.config(activeforeground=fg)
-    armid = 0
+        self.temp_label = Label(self.bottom_right_frame, text= "23°C", font=('', 100, 'bold'))
+        self.temp_label.pack(padx=10, pady=(10, 10), side=RIGHT)
+
+        self.temp_label.bind('<ButtonRelease-1>', self._labelButtonRelease)
+
+        self.curves_listbox = Listbox(self.top_frame,
+                     font=('', 25),
+                     width=18,
+                     height=10)
+        self.curves_listbox.insert(0, *list(sorted(self.curves.keys())))
+        self.curves_listbox.bind('<<ListboxSelect>>', self._showSelected)
+
+        self.curves_listbox.pack(padx=10, pady=10, side=LEFT)
+
+        self.figure_select = Figure(figsize=(6,4), dpi=100)
+        self.canvas_select = FigureCanvasTkAgg(self.figure_select, self.top_frame)
+
+        self.canvas_select.get_tk_widget().pack(padx=10, pady=10, side=RIGHT, fill=BOTH)
 
 
-def start():
-    if b['text'] == 'Start' and lb.curselection() == ():
-        return
-    if not is_armed():
-        arm()
-    else:
-        disarm(0)
-        name = lb.get(lb.curselection())
-        if b['text'] == 'Start':
-            top_frame.pack_forget()
-            top_frame_run.pack(side=TOP, fill=BOTH, expand=True)
-            b.config(text="Stop")
-            plotrun(Curve(name, curves[name]))
-        elif b['text'] == 'Stop':
-            top_frame_run.pack_forget()
-            top_frame.pack(side=TOP, fill=BOTH, expand=True)
-            b.config(text="Start")
-            plotcurve(Curve(name, curves[name]))
+        self.figure_run = Figure(figsize=(18, 4), dpi=100)
 
+        self.canvas_run = FigureCanvasTkAgg(self.figure_run, self.top_frame_run)
+        self.canvas_run.get_tk_widget().pack(padx=10, pady=10, side=RIGHT, fill=BOTH)
 
-#Create an instance of tkinter frame
-win = Tk()
-#Create a fullscreen window
-win.attributes('-fullscreen', True)
+    def _plotcurve(self, curve):
+        #curve = Curve("sdf", spec)
+        x, y = curve.getxy()
+        self.figure_select.clf()
+        a = self.figure_select.add_subplot(111)
+        a.grid()
+        a.set_xlabel("Time, hrs")
+        a.set_ylabel("Temperature, °C")
+        a.plot(x, y)
+        self.canvas_select.draw()
 
-top_frame = Frame(win)
-#top_frame.grid(row=0, column=0, padx=10, pady=10, sticky=E+W)
-top_frame.pack(side=TOP, fill=BOTH, expand=True)
+    def _plotrun(self, curve):
+        x, y = curve.getxy()
+        self.figure_run.clf()
+        a = self.figure_run.add_subplot(111)
+        a.grid()
+        a.set_xlabel("Time, hrs")
+        a.set_ylabel("Temperature, °C")
+        a.set_title(curve.name)
+        a.plot(x, y)
+        self.canvas_run.draw()
 
-top_frame_run = Frame(win)
+    def _showSelected(self, event):
+        name = self.curves_listbox.get(self.curves_listbox.curselection())
+        self._plotcurve(Curve(name, self.curves[name]))
 
-bottom_frame = Frame(win)
-#bottom_frame.grid(row=1, column=0, pady=10, sticky=E+W)
-bottom_frame.pack(side=BOTTOM, fill=BOTH, expand=True)
+    def _labelButtonRelease(self, event):
+        now = datetime.now()
+        if self.ts1 is not None:
+            delta = now - self.ts1
+            print(delta)
+            if delta < timedelta(seconds=1):
+                print("Goodbye.")
+                self.root.destroy()
+        self.ts1 = self.ts2
+        self.ts2 = now
 
-lframe = Frame(bottom_frame)
-lframe.pack(side=BOTTOM, fill=BOTH)
+    def _is_armed(self):
+        return self.launch_button['bg'] == 'red'
 
-b = Button(lframe,
-           text="Start",
-           font=('', 60),
-           command=start)
+    def _arm(self):
+        self.bg = (self.launch_button['bg'])
+        self.fg = (self.launch_button['fg'])
+        self.launch_button['bg'] = 'red'
+        self.launch_button['fg'] = 'white'
+        loc_armid = randint(1, 65536)
+        self.armid = loc_armid
+        self.launch_button.config(activebackground='red')
+        self.launch_button.config(activeforeground='white')
+        self.root.after(5000, lambda: self._disarm(loc_armid))
 
-# We don't have a mouse, so make active / passive colours the same
-b.config(activebackground=b['bg'])
-b.config(activeforeground=b['fg'])
-b.pack(padx=10, pady=10, side=LEFT)
+    def _disarm(self, eid):
+        if eid != 0 and self.armid != eid:
+            return
+        print("> disarm")
+        self.launch_button.config(bg=self.bg)
+        self.launch_button.config(fg=self.fg)
+        self.launch_button.config(activebackground=self.bg)
+        self.launch_button.config(activeforeground=self.fg)
+        self.armid = 0
 
-label= Label(lframe, text= "23°C", font=('', 100, 'bold'))
-label.pack(padx=10, pady=(10, 10), side=RIGHT)
+    def _launch(self):
+        if self.launch_button['text'] == 'Start' and self.curves_listbox.curselection() == ():
+            return
+        if not self._is_armed():
+            self._arm()
+        else:
+            self._disarm(0)
+            name = self.curves_listbox.get(self.curves_listbox.curselection())
+            if self.launch_button['text'] == 'Start':
+                self.top_frame.pack_forget()
+                self.top_frame_run.pack(side=TOP, fill=BOTH, expand=True)
+                self.launch_button.config(text="Stop")
+                self._plotrun(Curve(name, self.curves[name]))
+            elif self.launch_button['text'] == 'Stop':
+                self.top_frame_run.pack_forget()
+                self.top_frame.pack(side=TOP, fill=BOTH, expand=True)
+                self.launch_button.config(text="Start")
+                self._plotcurve(Curve(name, self.curves[name]))
 
-label.bind('<ButtonRelease-1>', labelButtonRelease)
+    def run(self):
+        self.root.mainloop()
 
-lb = Listbox(top_frame,
-             font=('', 25),
-             width=18,
-             height=10)
-lb.insert(0, *list(sorted(curves.keys())))
-lb.bind('<<ListboxSelect>>', showSelected)
-
-lb.pack(padx=10, pady=10, side=LEFT)
-
-f = Figure(figsize=(6,4), dpi=100)
-
-canvas = FigureCanvasTkAgg(f, top_frame)
-#canvas.show()
-canvas.get_tk_widget().pack(padx=10, pady=10, side=RIGHT, fill=BOTH)
-
-
-f_run = Figure(figsize=(18, 4), dpi=100)
-
-canvas_run = FigureCanvasTkAgg(f_run, top_frame_run)
-#canvas.show()
-canvas_run.get_tk_widget().pack(padx=10, pady=10, side=RIGHT, fill=BOTH)
-
-
-
-
-#label.grid(row=0, column=0, padx=100, pady=100)
-
-win.mainloop()
+ui = MainUI(curves_config)
+ui.run()
