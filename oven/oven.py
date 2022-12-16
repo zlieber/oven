@@ -3,6 +3,7 @@
 #Import the tkinter library
 from tkinter import *
 from tkinter import font
+from datetime import datetime, timedelta
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -78,30 +79,40 @@ def plotcurve(curve):
     canvas.draw()
 
 def showSelected(event):
-    #idx= str(event) + '\n' + str(lb.curselection())
-    #print(idx)
     name = lb.get(lb.curselection())
     plotcurve(Curve(name, curves[name]))
-    #show.configure(text=temp)
 
+
+ts1 = None
+ts2 = None
+
+def labelButtonRelease(event):
+    global ts1, ts2
+    now = datetime.now()
+    if ts1 is not None:
+        delta = now - ts1
+        print(delta)
+        if delta < timedelta(seconds=1):
+            print("Goodbye.")
+            win.destroy()
+    ts1 = ts2
+    ts2 = now
 
 #Create an instance of tkinter frame
 win = Tk()
-
-#fonts=list(font.families())
-#print(fonts)
-
-#Set the geometry
-#win.geometry("650x250")
+#Create a fullscreen window
+win.attributes('-fullscreen', True)
 
 top_frame = Frame(win)
-top_frame.grid(row=0, column=0, padx=10, pady=5)
+#top_frame.grid(row=0, column=0, padx=10, pady=10, sticky=E+W)
+top_frame.pack(side=TOP, fill=BOTH, expand=True)
 
 bottom_frame = Frame(win)
-bottom_frame.grid(row=1, column=0, padx=10, pady=5)
+#bottom_frame.grid(row=1, column=0, pady=10, sticky=E+W)
+bottom_frame.pack(side=BOTTOM, fill=BOTH, expand=True)
 
 b = Button(bottom_frame,
-           text="exit",
+           text="Start",
            font=('', 60),
            bg='red',
            fg='white',
@@ -111,7 +122,9 @@ b = Button(bottom_frame,
 b.pack(padx=10, pady=10, side=LEFT)
 
 label= Label(bottom_frame, text= "23°C", font=('', 100, 'bold'))
-label.pack(padx=(10, 10), pady=(10, 10), side=RIGHT)
+label.pack(padx=10, pady=(10, 10), side=RIGHT)
+
+label.bind('<ButtonRelease-1>', labelButtonRelease)
 
 lb = Listbox(top_frame,
              font=('', 25),
@@ -120,17 +133,14 @@ lb = Listbox(top_frame,
 lb.insert(0, *list(sorted(curves.keys())))
 lb.bind('<<ListboxSelect>>', showSelected)
 
-lb.pack(padx=(10, 10), pady=(10, 10), side=LEFT)
+lb.pack(padx=10, pady=10, side=LEFT)
 
 f = Figure(figsize=(6,4), dpi=100)
 
 canvas = FigureCanvasTkAgg(f, top_frame)
 #canvas.show()
-canvas.get_tk_widget().pack(side=RIGHT, fill=BOTH)
+canvas.get_tk_widget().pack(padx=10, pady=10, side=RIGHT, fill=BOTH)
 
 #label.grid(row=0, column=0, padx=100, pady=100)
-
-#Create a fullscreen window
-win.attributes('-fullscreen', True)
 
 win.mainloop()
