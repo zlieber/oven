@@ -98,6 +98,38 @@ def labelButtonRelease(event):
     ts1 = ts2
     ts2 = now
 
+def is_armed():
+    global b
+    return b['bg'] == 'red'
+
+def arm():
+    global b, bg, fg, bg, fg
+    bg = (b['bg'])
+    fg = (b['fg'])
+    b['bg'] = 'red'
+    b['fg'] = 'white'
+    b.config(activebackground='red')
+    b.config(activeforeground='white')
+    win.after(2000, disarm)
+
+def disarm():
+    print("> disarm")
+    global b, bg, fg
+    b.config(bg=bg)
+    b.config(fg=fg)
+    b.config(activebackground=bg)
+    b.config(activeforeground=fg)
+
+
+def start():
+    if lb.curselection() == ():
+        return
+    if not is_armed():
+        arm()
+    else:
+        disarm()
+        top_frame.pack_forget()
+
 #Create an instance of tkinter frame
 win = Tk()
 #Create a fullscreen window
@@ -111,17 +143,20 @@ bottom_frame = Frame(win)
 #bottom_frame.grid(row=1, column=0, pady=10, sticky=E+W)
 bottom_frame.pack(side=BOTTOM, fill=BOTH, expand=True)
 
-b = Button(bottom_frame,
+lframe = Frame(bottom_frame)
+lframe.pack(side=BOTTOM, fill=BOTH)
+
+b = Button(lframe,
            text="Start",
            font=('', 60),
-           bg='red',
-           fg='white',
-           activebackground='red',
-           activeforeground='white',
-           command=win.destroy)
+           command=start)
+
+# We don't have a mouse, so make active / passive colours the same
+b.config(activebackground=b['bg'])
+b.config(activeforeground=b['fg'])
 b.pack(padx=10, pady=10, side=LEFT)
 
-label= Label(bottom_frame, text= "23°C", font=('', 100, 'bold'))
+label= Label(lframe, text= "23°C", font=('', 100, 'bold'))
 label.pack(padx=10, pady=(10, 10), side=RIGHT)
 
 label.bind('<ButtonRelease-1>', labelButtonRelease)
