@@ -4,6 +4,7 @@
 from tkinter import *
 from tkinter import font
 from datetime import datetime, timedelta
+from random import randint
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -78,6 +79,17 @@ def plotcurve(curve):
     a.plot(x, y)
     canvas.draw()
 
+def plotrun(curve):
+    x, y = curve.getxy()
+    f_run.clf()
+    a = f_run.add_subplot(111)
+    a.grid()
+    a.set_xlabel("Time, hrs")
+    a.set_ylabel("Temperature, °C")
+    a.set_title(curve.name)
+    a.plot(x, y)
+    canvas_run.draw()
+
 def showSelected(event):
     name = lb.get(lb.curselection())
     plotcurve(Curve(name, curves[name]))
@@ -102,33 +114,51 @@ def is_armed():
     global b
     return b['bg'] == 'red'
 
+armid = 0
+
 def arm():
-    global b, bg, fg, bg, fg
+    global b, bg, fg, bg, fg, armid
     bg = (b['bg'])
     fg = (b['fg'])
     b['bg'] = 'red'
     b['fg'] = 'white'
+    loc_armid = randint(1, 65536)
+    armid = loc_armid
     b.config(activebackground='red')
     b.config(activeforeground='white')
-    win.after(2000, disarm)
+    win.after(5000, lambda: disarm(loc_armid))
 
-def disarm():
+def disarm(eid):
+    global b, bg, fg, armid
+    if eid != 0 and armid != eid:
+        return
     print("> disarm")
-    global b, bg, fg
     b.config(bg=bg)
     b.config(fg=fg)
     b.config(activebackground=bg)
     b.config(activeforeground=fg)
+    armid = 0
 
 
 def start():
-    if lb.curselection() == ():
+    if b['text'] == 'Start' and lb.curselection() == ():
         return
     if not is_armed():
         arm()
     else:
-        disarm()
-        top_frame.pack_forget()
+        disarm(0)
+        name = lb.get(lb.curselection())
+        if b['text'] == 'Start':
+            top_frame.pack_forget()
+            top_frame_run.pack(side=TOP, fill=BOTH, expand=True)
+            b.config(text="Stop")
+            plotrun(Curve(name, curves[name]))
+        elif b['text'] == 'Stop':
+            top_frame_run.pack_forget()
+            top_frame.pack(side=TOP, fill=BOTH, expand=True)
+            b.config(text="Start")
+            plotcurve(Curve(name, curves[name]))
+
 
 #Create an instance of tkinter frame
 win = Tk()
@@ -138,6 +168,8 @@ win.attributes('-fullscreen', True)
 top_frame = Frame(win)
 #top_frame.grid(row=0, column=0, padx=10, pady=10, sticky=E+W)
 top_frame.pack(side=TOP, fill=BOTH, expand=True)
+
+top_frame_run = Frame(win)
 
 bottom_frame = Frame(win)
 #bottom_frame.grid(row=1, column=0, pady=10, sticky=E+W)
@@ -175,6 +207,16 @@ f = Figure(figsize=(6,4), dpi=100)
 canvas = FigureCanvasTkAgg(f, top_frame)
 #canvas.show()
 canvas.get_tk_widget().pack(padx=10, pady=10, side=RIGHT, fill=BOTH)
+
+
+f_run = Figure(figsize=(18, 4), dpi=100)
+
+canvas_run = FigureCanvasTkAgg(f_run, top_frame_run)
+#canvas.show()
+canvas_run.get_tk_widget().pack(padx=10, pady=10, side=RIGHT, fill=BOTH)
+
+
+
 
 #label.grid(row=0, column=0, padx=100, pady=100)
 
