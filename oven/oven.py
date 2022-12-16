@@ -110,12 +110,6 @@ b = Button(bottom_frame,
            command=win.destroy)
 b.pack(padx=10, pady=10, side=LEFT)
 
-b = Button(bottom_frame,
-           text="Replot",
-           font=('', 60),
-           command=lambda: plotcurve('hello'))
-b.pack(padx=10, pady=10, side=LEFT)
-
 label= Label(bottom_frame, text= "23°C", font=('', 100, 'bold'))
 label.pack(padx=(10, 10), pady=(10, 10), side=RIGHT)
 
@@ -129,11 +123,6 @@ lb.bind('<<ListboxSelect>>', showSelected)
 lb.pack(padx=(10, 10), pady=(10, 10), side=LEFT)
 
 f = Figure(figsize=(6,4), dpi=100)
-a = f.add_subplot(111)
-a.grid()
-a.set_xlabel("Time, hrs")
-a.set_ylabel("Temperature, °C")
-a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
 
 canvas = FigureCanvasTkAgg(f, top_frame)
 #canvas.show()
