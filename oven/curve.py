@@ -1,4 +1,7 @@
 
+from datetime import datetime
+from scipy.interpolate import interp1d
+
 class Curve:
     def __init__(self, name, spec):
         self.name = name
@@ -26,3 +29,19 @@ class Curve:
             y.append(temp)
 
         return x, y
+
+    def hours_now(self, start_time):
+        td = datetime.now() - start_time
+        hrs = td.total_seconds() / 3600
+        return hrs
+
+    def target_value(self, hours):
+        x, y = self.getxy()
+        interp = interp1d(x, y, kind='linear')
+        res = interp(hours)
+        return res
+
+    def target_value_now(self, start_time):
+        hrs = self.hours_now(start_time)
+        return self.target_value(hrs)
+
