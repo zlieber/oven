@@ -4,7 +4,12 @@
 from mainui import MainUI
 from oven_controller import OvenController
 from heat_controller import HeatController
+from dummy_heat_controller import DummyHeatController
 from temp_monitor import TemperatureMonitor
+from dummy_temp_monitor import DummyTemperatureMonitor
+
+import argparse
+import sys
 
 ptmw = """
 2 50 8
@@ -31,11 +36,22 @@ curves_config = {
     "XPreg cure fast": xpreg_med
     }
 
+parser = argparse.ArgumentParser(
+                    prog = 'oven.py',
+                    description = 'Composites oven controller')
 
-heat_controller = HeatController()
+parser.add_argument('-d', '--dummy', action='store_true')
+
+args = parser.parse_args(sys.argv[1:])
+
+if args.dummy:
+    temp_monitor = DummyTemperatureMonitor()
+    heat_controller = DummyHeatController(temp_monitor)
+else:
+    heat_controller = HeatController()
+    temp_monitor = TemperatureMonitor()
+
 oven_controller = OvenController(heat_controller)
-temp_monitor = TemperatureMonitor()
-heat_controller.set_temp_monitor(temp_monitor);
 
 ui = MainUI(curves_config, oven_controller, temp_monitor)
 ui.run()
