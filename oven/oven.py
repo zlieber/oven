@@ -40,7 +40,8 @@ parser = argparse.ArgumentParser(
                     prog = 'oven.py',
                     description = 'Composites oven controller')
 
-parser.add_argument('-d', '--dummy', action='store_true')
+parser.add_argument('-d', '--dummy', action='store_true',
+                    help="Use dummy heat controller and temperature monitor.")
 
 args = parser.parse_args(sys.argv[1:])
 
