@@ -41,6 +41,12 @@ class Curve:
 
     def target_value(self, hours):
         x, y = self.getxy()
+
+        # After the end of the curve assume target temp is 0
+        # so the oven keeps cooling down
+        if hours >= x[-1]:
+            return 0.0
+
         interp = interp1d(x, y, kind='linear')
         res = interp(hours)
         return res
