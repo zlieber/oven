@@ -8,9 +8,9 @@ This code uses Raspberry PI or similar together with a touch screen and a relay 
 
 ## Hardware
 
-Raspberry PI or similar (I tested with Rock PI)
-Touch screen (tested with 7in HDMI)
-Relay. Solid-state relay (SSR) is recommended
+- Raspberry PI or similar (I tested with Rock PI)
+- Touch screen (tested with 7in HDMI)
+- Relay. Solid-state relay (SSR) is recommended
 
 ## Installation
 
