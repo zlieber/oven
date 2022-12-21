@@ -39,11 +39,16 @@ test_run = """
 2 100 1
 """
 
+quick_test = """
+2 50 0.5
+"""
+
 curves_config = {
     "PTMW post cure slow": ptmw,
     "XPreg cure slow": xpreg_long,
     "XPreg cure fast": xpreg_med,
-    "Test run": test_run
+    "Temperature Test": test_run,
+    "Quick test": quick_test
     }
 
 FORMAT = '%(asctime)s %(name)s %(message)s'
