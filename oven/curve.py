@@ -1,11 +1,14 @@
 
-from datetime import datetime
+import time
 from scipy.interpolate import interp1d
+
+import logging
 
 class Curve:
     def __init__(self, name, spec):
         self.name = name
         self.spec = spec
+        self.logger = logging.getLogger("Curve")
 
     def getxy(self):
         x = [0.0]
@@ -31,8 +34,9 @@ class Curve:
         return x, y
 
     def hours_now(self, start_time):
-        td = datetime.now() - start_time
-        hrs = td.total_seconds() / 3600
+        td = time.monotonic() - start_time
+        hrs = td / 3600
+        #self.logger.debug("start_time: %.03f, td: %s, hrs: %s" % (start_time, td, hrs))
         return hrs
 
     def target_value(self, hours):

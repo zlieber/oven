@@ -1,7 +1,7 @@
 
 from tkinter import *
 from tkinter import font
-from datetime import datetime, timedelta
+import time
 from random import randint
 
 import matplotlib
@@ -11,8 +11,12 @@ from matplotlib.figure import Figure
 
 from curve import Curve
 
+import logging
+
 class MainUI:
     def __init__(self, curves, oven_controller, temp_monitor):
+        self.logger = logging.getLogger("MainUI")
+
         self.ts1 = None
         self.ts2 = None
         self.armid = 0
@@ -88,7 +92,6 @@ class MainUI:
             self._plotrun(self.run_curve)
 
     def _plotcurve(self, curve):
-        #curve = Curve("sdf", spec)
         x, y = curve.getxy()
         self.figure_select.clf()
         a = self.figure_select.add_subplot(111)
@@ -121,10 +124,10 @@ class MainUI:
         self._plotcurve(Curve(name, self.curves[name]))
 
     def _labelButtonRelease(self, event):
-        now = datetime.now()
+        now = time.monotonic()
         if self.ts1 is not None:
             delta = now - self.ts1
-            if delta < timedelta(seconds=1):
+            if delta < 1.0:
                 print("Goodbye.")
                 self.root.destroy()
         self.ts1 = self.ts2
@@ -160,27 +163,46 @@ class MainUI:
             self._arm()
         else:
             self._disarm(0)
-            name = self.curves_listbox.get(self.curves_listbox.curselection())
             if self.launch_button['text'] == 'Start':
-                self.top_frame.pack_forget()
-                self.top_frame_run.pack(side=TOP, fill=BOTH, expand=True)
-                self.templog_x = []
-                self.templog_y = []
-                self.start_time = datetime.now()
-                self.launch_button.config(text="Stop")
-                self.run_curve = Curve(name, self.curves[name])
-                self._plotrun(self.run_curve)
-                self.oven_controller.start(self.run_curve)
+                self._do_start()
             elif self.launch_button['text'] == 'Stop':
-                self.templog_x = None
-                self.templog_y = None
-                self.top_frame_run.pack_forget()
-                self.top_frame.pack(side=TOP, fill=BOTH, expand=True)
-                self.launch_button.config(text="Start")
-                self._plotcurve(Curve(name, self.curves[name]))
-                self.oven_controller.stop()
-                self.temp_label.config(fg = "black")
+                self._do_stop()
+
+    def _do_start(self):
+        name = self.curves_listbox.get(self.curves_listbox.curselection())
+        self.logger.info("Starting curve: %s" % name)
+
+        # Change the display to running graph
+        self.top_frame.pack_forget()
+        self.top_frame_run.pack(side=TOP, fill=BOTH, expand=True)
+
+        # Start accumulating temp data
+        self.templog_x = []
+        self.templog_y = []
+
+        # Start the controller
+        self.run_curve = Curve(name, self.curves[name])
+        self.start_time = self.oven_controller.start(self.run_curve)
+        self.logger.debug("Start time is %s" % self.start_time)
+
+        # Launch button will now stop the schedule
+        self.launch_button.config(text="Stop")
+
+        # Plot run curve we are executing
+        self._plotrun(self.run_curve)
+
+    def _do_stop(self):
+        name = self.curves_listbox.get(self.curves_listbox.curselection())
+        self.logger.info("Stopping curve: %s" % name)
+
+        self.templog_x = None
+        self.templog_y = None
+        self.top_frame_run.pack_forget()
+        self.top_frame.pack(side=TOP, fill=BOTH, expand=True)
+        self.launch_button.config(text="Start")
+        self._plotcurve(Curve(name, self.curves[name]))
+        self.oven_controller.stop()
+        self.temp_label.config(fg = "black")
 
     def run(self):
         self.root.mainloop()
-

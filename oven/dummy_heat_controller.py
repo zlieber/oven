@@ -1,5 +1,5 @@
 
-from datetime import datetime
+import time
 
 class DummyHeatController:
     def __init__(self, temp_monitor):
@@ -10,7 +10,7 @@ class DummyHeatController:
     def heat_on(self):
         if self.is_on:
             return
-        self.last_time = datetime.now()
+        self.last_time = time.monotonic()
         print("Heat ON")
         self.is_on = True
 
@@ -23,8 +23,8 @@ class DummyHeatController:
     def on_temp_change(self):
         if self.last_time is None:
             return
-        curr_time = datetime.now()
-        since_last = (curr_time - self.last_time).total_seconds() / 60.0
+        curr_time = time.monotonic()
+        since_last = (curr_time - self.last_time) / 60.0
         if self.is_on:
             sim_deg = self.simulating_deg_per_min[0]
         else:

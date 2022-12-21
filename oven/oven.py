@@ -11,6 +11,9 @@ from dummy_temp_monitor import DummyTemperatureMonitor
 import argparse
 import sys
 
+import logging
+from logging.handlers import RotatingFileHandler
+
 ptmw = """
 2 50 8
 1 65 3
@@ -30,11 +33,29 @@ xpreg_med = """
 2 100 4
 """
 
+test_run = """
+2 60 1
+2 90 1
+2 100 1
+"""
+
 curves_config = {
     "PTMW post cure slow": ptmw,
     "XPreg cure slow": xpreg_long,
-    "XPreg cure fast": xpreg_med
+    "XPreg cure fast": xpreg_med,
+    "Test run": test_run
     }
+
+FORMAT = '%(asctime)s %(name)s %(message)s'
+handlers = [
+    RotatingFileHandler("/home/rock/log/oven.log", backupCount=100, maxBytes=1024*1024)
+    ]
+logging.basicConfig(format=FORMAT,
+                    level=logging.DEBUG,
+                    handlers=handlers)
+
+logger = logging.getLogger('oven')
+logger.info("Oven is starting")
 
 parser = argparse.ArgumentParser(
                     prog = 'oven.py',
@@ -56,3 +77,5 @@ oven_controller = OvenController(heat_controller)
 
 ui = MainUI(curves_config, oven_controller, temp_monitor)
 ui.run()
+
+logger.info("Oven is shutting down.")
