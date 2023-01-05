@@ -27,13 +27,13 @@ ptmw_fin_cont_105 = """
 0.25 105 2
 """
 
-xpreg_long = """
-2 60 6
-2 80 6
+xpreg_100 = """
+1 70 4
+2 100 4
 """
 
-xpreg_med = """
-2 60 6
+xpreg_long_100 = """
+1 70 6
 2 100 4
 """
 
@@ -50,8 +50,8 @@ quick_test = """
 curves_config = {
     "PTMW post cure slow": ptmw,
     "PTMW final cont. 105": ptmw_fin_cont_105,
-    "XPreg cure slow": xpreg_long,
-    "XPreg cure fast": xpreg_med,
+    "XPreg 100 standard": xpreg_100,
+    "XPreg 100 long soak": xpreg_long_100,
     "Temperature Test": test_run,
     "Quick test": quick_test
     }
